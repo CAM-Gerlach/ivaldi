@@ -4,11 +4,12 @@ Main-level Ivaldi entry point.
 """
 
 # Local imports
-import ivaldi
+import ivaldi.raingauge
 
 
 def main():
-    print(f"Ivaldi version {ivaldi.__version__}")
+    """Execute package-level main function."""
+    ivaldi.raingauge.main()
 
 
 if __name__ == "__main__":
