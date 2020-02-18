@@ -16,7 +16,6 @@ import gpiozero
 
 # Rain gauge constants
 MM_PER_TIP = 0.2
-PIN_DEFAULT = 26
 RAIN_PRECISION_MM = 1
 RAIN_RATE_PRECISION_MM = 2
 S_IN_HR = 3600
@@ -134,14 +133,14 @@ class TippingBucket():
         self.reset_time()
 
 
-def monitor_raingauge(pin=PIN_DEFAULT, frequency=FREQ_DEFAULT, log=False):
+def monitor_raingauge(pin, frequency=FREQ_DEFAULT, log=False):
     """
     Mainloop for continously reporting key metrics from the rain gauge.
 
     Parameters
     ----------
-    pin : int, optional
-        The GPIO pin to use, in BCM numbering. The default is 26.
+    pin : int
+        The GPIO pin to use, in BCM numbering.
     frequency : float, optional
         The frequency at which to update, in Hz. The default is 10 Hz.
     log : bool, optional
