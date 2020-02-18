@@ -7,7 +7,7 @@ import sys
 
 # Local imports
 import ivaldi.devices.adafruit
-import ivaldi.devices.raingauge
+import ivaldi.devices.counter
 import ivaldi.output
 import ivaldi.utils
 
@@ -137,7 +137,7 @@ def monitor_sensors(pin, frequency=FREQUENCY_DEFAULT,
 
     """
     # Mainloop to measure tipping bucket
-    rain_gauge = ivaldi.devices.raingauge.TippingBucketRainGauge(pin=pin)
+    rain_gauge = ivaldi.devices.counter.TippingBucketRainGauge(pin=pin)
     pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
     humidity_sensor = ivaldi.devices.adafruit.AdafruitSHT31D()
 

@@ -10,7 +10,7 @@ import serial
 
 # Local imports
 import ivaldi.devices.adafruit
-import ivaldi.devices.raingauge
+import ivaldi.devices.counter
 import ivaldi.monitor
 import ivaldi.utils
 
@@ -160,7 +160,7 @@ def send_monitoring_data(
     None.
 
     """
-    rain_gauge = ivaldi.devices.raingauge.TippingBucketRainGauge(pin=pin)
+    rain_gauge = ivaldi.devices.counter.TippingBucketRainGauge(pin=pin)
     pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
     humidity_sensor = ivaldi.devices.adafruit.AdafruitSHT31D()
     print("Sending data...")

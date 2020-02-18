@@ -27,7 +27,7 @@ class CountDevice():
     Parameters
     ----------
     pin : int
-        The GPIO pin to use, in BCM numbering. The default is 26.
+        The GPIO pin to use, in BCM numbering.
     conversion_factor : float, optional
         The conversion factor between the count and the processed output.
         The default is 1.
@@ -127,7 +127,7 @@ class TippingBucketRainGauge(CountDevice):
     Parameters
     ----------
     pin : int, optional
-        The GPIO pin to use, in BCM numbering. The default is 26.
+        The GPIO pin to use, in BCM numbering.
 
     conversion_factor : float, optional
         The conversion factor between the count and the processed output.
