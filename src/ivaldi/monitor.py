@@ -3,39 +3,48 @@ Monitoring mainloop for Ivaldi.
 """
 
 # Standard library imports
-import signal
 import sys
-import threading
-import time
 
 # Local imports
 import ivaldi.devices.raingauge
-
+import ivaldi.utils
 
 # Script constants
-EXIT_EVENT = threading.Event()
-FREQ_DEFAULT = 10
-SIGNALS_SET = ["SIG" + signame for signame in {"TERM", "HUP", "INT", "BREAK"}]
-SLEEP_TICK_S = 0.5
-SLEEP_TIME_MIN = 0.01
+FREQUENCY_DEFAULT = 10
 
 
-def _quit_handler(signo, _frame):
-    """Signal handler that prints a message and sets an event."""
-    print(f"\nInterrupted by signal {signo}; terminating.")
-    EXIT_EVENT.set()
+def check_raingauge(raingauge_obj, log=False):
+    """
+    Get and print one sample from the rain gauge.
+
+    Parameters
+    ----------
+    raingauge_obj : ivaldi.devices.raingauge.TippingBucket
+        Initialized rain gauge instance to retrieve data from.
+    log : bool, optional
+        Whether to print every observation on a seperate line or update one.
+        The default is False.
+
+    Returns
+    -------
+    None.
+
+    """
+    output_strs = [
+        f"{round(raingauge_obj.time_elapsed_s, 2):.2f} s elapsed",
+        f"{raingauge_obj.tips} tips",
+        f"{raingauge_obj.rain_mm:.1f} mm",
+        f"{raingauge_obj.rain_rate_mm_h():.2f} mm/h",
+        ]
+    output_str = " | ".join(output_strs)
+    if log:
+        print(output_str)
+    else:
+        sys.stdout.write("\r" + output_str)
+        sys.stdout.flush()
 
 
-def _set_signal_handler(signal_handler, signals=SIGNALS_SET):
-    """Helper function that sets a signal handler for the given signals."""
-    for signal_type in signals:
-        try:
-            signal.signal(getattr(signal, signal_type), signal_handler)
-        except AttributeError:  # Windows doesn't have SIGHUP
-            continue
-
-
-def monitor_raingauge(pin, frequency=FREQ_DEFAULT, log=False):
+def monitor_raingauge(pin, frequency=FREQUENCY_DEFAULT, log=False):
     """
     Mainloop for continously reporting key metrics from the rain gauge.
 
@@ -54,29 +63,7 @@ def monitor_raingauge(pin, frequency=FREQ_DEFAULT, log=False):
     None.
 
     """
-    # Calculate sleep time
-    sleep_time = SLEEP_TIME_MIN if frequency == 0 else 1 / frequency
-
-    # Set up quit signal handler
-    _set_signal_handler(_quit_handler)
-
     # Mainloop to measure tipping bucket
     tipping_bucket = ivaldi.devices.raingauge.TippingBucket(pin=pin)
-    while not EXIT_EVENT.is_set():
-        output_strs = [
-            f"{round(tipping_bucket.time_elapsed_s, 2):.2f} s elapsed",
-            f"{tipping_bucket.tips} tips",
-            f"{tipping_bucket.rain_mm:.1f} mm",
-            f"{tipping_bucket.rain_rate_mm_h():.2f} mm/h",
-            ]
-        output_str = " | ".join(output_strs)
-        if log:
-            print(output_str)
-        else:
-            sys.stdout.write("\r" + output_str)
-            sys.stdout.flush()
-
-        time_tosleep = sleep_time
-        while not EXIT_EVENT.is_set() and time_tosleep > 0:
-            time.sleep(min(SLEEP_TICK_S, time_tosleep))
-            time_tosleep -= SLEEP_TICK_S
+    ivaldi.utils.run_periodic(check_raingauge)(
+        raingauge_obj=tipping_bucket, frequency=frequency, log=log)

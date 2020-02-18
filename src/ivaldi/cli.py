@@ -40,7 +40,7 @@ def generate_arg_parser():
         "--frequency", type=float, help=f"Update frequency, in Hz")
     parser_monitor.add_argument(
         "--log", action="store_true", help=f"Print every update to a new line")
-    parser_monitor.set_defaults(fn=ivaldi.monitor.monitor_raingauge)
+    parser_monitor.set_defaults(func=ivaldi.monitor.monitor_raingauge)
 
     return parser_main
 
@@ -61,9 +61,9 @@ def main():
         print(f"Ivaldi version {ivaldi.__version__}")
         sys.exit()
 
-    fn_to_dispatch = parsed_args.fn
-    del parsed_args.fn
-    fn_to_dispatch(**vars(parsed_args))
+    func_to_dispatch = parsed_args.func
+    del parsed_args.func
+    func_to_dispatch(**vars(parsed_args))
 
 
 if __name__ == "__main__":
