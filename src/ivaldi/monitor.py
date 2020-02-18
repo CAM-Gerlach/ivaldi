@@ -11,7 +11,7 @@ import threading
 import time
 
 # Local imports
-import ivaldi.raingauge
+import ivaldi.devices.raingauge
 
 
 # Script constants
@@ -63,7 +63,7 @@ def monitor_raingauge(pin, frequency=FREQ_DEFAULT, log=False):
     _set_signal_handler(_quit_handler)
 
     # Mainloop to measure tipping bucket
-    tipping_bucket = ivaldi.raingauge.TippingBucket(pin=pin)
+    tipping_bucket = ivaldi.devices.raingauge.TippingBucket(pin=pin)
     while not EXIT_EVENT.is_set():
         output_strs = [
             f"{round(tipping_bucket.time_elapsed_s, 2):.2f} s elapsed",
