@@ -9,12 +9,13 @@ import struct
 import serial
 
 # Local imports
+import ivaldi.devices.adafruit
 import ivaldi.devices.raingauge
 import ivaldi.monitor
 import ivaldi.utils
 
 
-DATA_FORMAT = "!fIff"
+DATA_FORMAT = "!fIfffffff"
 END_BYTE = b"\n"
 
 FREQUENCY_SEND = 10
@@ -53,7 +54,7 @@ def recieve_data_packet(serial_port, log=False):
     except struct.error:
         pass
     else:
-        ivaldi.monitor.pretty_print_raingauge(*unpacked_data, log=log)
+        ivaldi.monitor.pretty_print_data(*unpacked_data, log=log)
         return unpacked_data
 
 
@@ -82,7 +83,7 @@ def recieve_monitoring_data(serial_device="/dev/ttyAMA1", log=False):
             )
 
 
-def send_data_packet(raingauge_obj, serial_port):
+def send_data_packet(raingauge_obj, pressure_obj, humidity_obj, serial_port):
     """
     Send an indiviudal data packet to a serial port.
 
@@ -90,6 +91,10 @@ def send_data_packet(raingauge_obj, serial_port):
     ----------
     raingauge_obj : ivaldi.devices.raingauge.TippingBucket
         Initialized rain gauge instance to retrieve data from.
+    pressure_obj : ivaldi.devices.adafruit.AdafruitBMP280
+        Initialized adafruit pressure sensor to retrieve data from.
+    humidity_obj : ivaldi.devices.adafruit.AdafruitSHT31D
+        Initialized adafruit humidity sensor to retrieve data from.
     serial_port : serial.Serial
         The serial port object to read from.
 
@@ -103,6 +108,11 @@ def send_data_packet(raingauge_obj, serial_port):
         raingauge_obj.tips,
         raingauge_obj.rain_mm,
         raingauge_obj.rain_rate_mm_h(),
+        pressure_obj.temperature,
+        pressure_obj.pressure,
+        pressure_obj.altitude,
+        humidity_obj.temperature,
+        humidity_obj.relative_humidity,
         ]
     data_packet = struct.pack(DATA_FORMAT, *data_to_pack) + END_BYTE
     serial_port.write(data_packet)
@@ -128,10 +138,14 @@ def send_monitoring_data(
 
     """
     tipping_bucket = ivaldi.devices.raingauge.TippingBucket(pin=pin)
+    pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
+    humidity_sensor = ivaldi.devices.adafruit.AdafruitSHT31D()
     print("Sending data...")
     with serial.Serial(serial_device, **SERIAL_PARAMS) as serial_port:
         ivaldi.utils.run_periodic(send_data_packet)(
             raingauge_obj=tipping_bucket,
+            pressure_obj=pressure_sensor,
+            humidity_obj=humidity_sensor,
             serial_port=serial_port,
             frequency=frequency,
             )

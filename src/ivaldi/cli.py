@@ -36,18 +36,18 @@ def generate_arg_parser():
         "monitor", help="Monitor the sensor status and print to the terminal",
         argument_default=argparse.SUPPRESS)
     parser_monitor.add_argument(
-        "pin", type=int, help="GPIO pin to use, in SoC (Broadcom) numbering")
+        "pin", type=int, help="GPIO pin to use, in BCM (Broadcom) numbering")
     parser_monitor.add_argument(
         "--frequency", type=float, help="Update frequency, in Hz")
     parser_monitor.add_argument(
         "--log", action="store_true", help="Print every update to a new line")
-    parser_monitor.set_defaults(func=ivaldi.monitor.monitor_raingauge)
+    parser_monitor.set_defaults(func=ivaldi.monitor.monitor_sensors)
 
     parser_send = subparsers.add_parser(
         "send", help="Monitor the connected sensor and send the data via UART",
         argument_default=argparse.SUPPRESS)
     parser_send.add_argument(
-        "pin", type=int, help="GPIO pin to use, in SoC (Broadcom) numbering")
+        "pin", type=int, help="GPIO pin to use, in BCM (Broadcom) numbering")
     parser_send.add_argument(
         "--serial-device", help="The UART device to use (e.g. '/dev/ttyAMA0')")
     parser_send.add_argument(
@@ -68,7 +68,7 @@ def generate_arg_parser():
 
 def main():
     """
-    Parse command line arguments and start the rain gauge monitor mainloop.
+    Parse command line arguments and start the sensor monitor mainloop.
 
     Returns
     -------
