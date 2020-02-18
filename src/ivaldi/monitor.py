@@ -75,7 +75,7 @@ def get_sensor_data(raingauge_obj, pressure_obj, humidity_obj,
 
     Parameters
     ----------
-    raingauge_obj : ivaldi.devices.raingauge.TippingBucket
+    raingauge_obj : ivaldi.devices.raingauge.TippingBucketRainGauge
         Initialized rain gauge instance to retrieve data from.
     pressure_obj : ivaldi.devices.adafruit.AdafruitBMP280
         Initialized adafruit pressure sensor to retrieve data from.
@@ -94,9 +94,9 @@ def get_sensor_data(raingauge_obj, pressure_obj, humidity_obj,
     """
     sensor_data = [
         raingauge_obj.time_elapsed_s,
-        raingauge_obj.tips,
-        raingauge_obj.rain_mm,
-        raingauge_obj.rain_rate_mm_h(),
+        raingauge_obj.count,
+        raingauge_obj.output_value_total,
+        raingauge_obj.output_value_average(),
         pressure_obj.temperature,
         pressure_obj.pressure,
         pressure_obj.altitude,
@@ -137,12 +137,12 @@ def monitor_sensors(pin, frequency=FREQUENCY_DEFAULT,
 
     """
     # Mainloop to measure tipping bucket
-    tipping_bucket = ivaldi.devices.raingauge.TippingBucket(pin=pin)
+    rain_gauge = ivaldi.devices.raingauge.TippingBucketRainGauge(pin=pin)
     pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
     humidity_sensor = ivaldi.devices.adafruit.AdafruitSHT31D()
 
     sensor_params = {
-        "raingauge_obj": tipping_bucket,
+        "raingauge_obj": rain_gauge,
         "pressure_obj": pressure_sensor,
         "humidity_obj": humidity_sensor,
         "frequency": frequency,
