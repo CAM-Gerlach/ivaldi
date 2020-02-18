@@ -10,7 +10,6 @@ import time
 
 
 EXIT_EVENT = threading.Event()
-FREQUENCY_DEFAULT = 1
 SIGNALS_SET = ["SIG" + signame for signame in {"TERM", "HUP", "INT", "BREAK"}]
 SLEEP_TICK_S = 0.5
 SLEEP_TIME_MIN = 0.01
@@ -34,9 +33,14 @@ def _set_signal_handler(signal_handler, signals=SIGNALS_SET):
 def run_periodic(func):
     """Decorator to run a function at a periodic interval w/signal handling."""
     @functools.wraps(func)
-    def _run_periodic(*args, frequency=FREQUENCY_DEFAULT, **kwargs):
+    def _run_periodic(*args, period=None, frequency=None, **kwargs):
         # Calculate sleep time
-        sleep_time = SLEEP_TIME_MIN if frequency == 0 else 1 / frequency
+        if period is not None:
+            sleep_time = period
+        elif frequency is not None:
+            sleep_time = SLEEP_TIME_MIN if frequency == 0 else 1 / frequency
+        else:
+            sleep_time = SLEEP_TIME_MIN
 
         # Set up quit signal handler
         _set_signal_handler(_quit_handler)

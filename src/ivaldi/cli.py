@@ -10,6 +10,7 @@ import sys
 # Local imports
 import ivaldi
 import ivaldi.monitor
+import ivaldi.link
 
 
 def generate_arg_parser():
@@ -37,10 +38,30 @@ def generate_arg_parser():
     parser_monitor.add_argument(
         "pin", type=int, help="GPIO pin to use, in SoC (Broadcom) numbering")
     parser_monitor.add_argument(
-        "--frequency", type=float, help=f"Update frequency, in Hz")
+        "--frequency", type=float, help="Update frequency, in Hz")
     parser_monitor.add_argument(
-        "--log", action="store_true", help=f"Print every update to a new line")
+        "--log", action="store_true", help="Print every update to a new line")
     parser_monitor.set_defaults(func=ivaldi.monitor.monitor_raingauge)
+
+    parser_send = subparsers.add_parser(
+        "send", help="Monitor the connected sensor and send the data via UART",
+        argument_default=argparse.SUPPRESS)
+    parser_send.add_argument(
+        "pin", type=int, help="GPIO pin to use, in SoC (Broadcom) numbering")
+    parser_send.add_argument(
+        "--serial-device", help="The UART device to use (e.g. '/dev/ttyAMA0')")
+    parser_send.add_argument(
+        "--frequency", type=float, help="Update frequency, in Hz")
+    parser_send.set_defaults(func=ivaldi.link.send_monitoring_data)
+
+    parser_recieve = subparsers.add_parser(
+        "recieve", help="Recieve and print the IoT sensor data via UART",
+        argument_default=argparse.SUPPRESS)
+    parser_recieve.add_argument(
+        "--serial-device", help="The UART device to use (e.g. '/dev/ttyAMA0')")
+    parser_recieve.add_argument(
+        "--log", action="store_true", help="Print every update to a new line")
+    parser_recieve.set_defaults(func=ivaldi.link.recieve_monitoring_data)
 
     return parser_main
 
