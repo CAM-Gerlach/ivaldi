@@ -38,6 +38,8 @@ def generate_arg_parser():
     parser_monitor.add_argument(
         "pin", type=int, help="GPIO pin to use, in BCM (Broadcom) numbering")
     parser_monitor.add_argument(
+        "--output-path", help="CSV file to output to, none if not passed")
+    parser_monitor.add_argument(
         "--frequency", type=float, help="Update frequency, in Hz")
     parser_monitor.add_argument(
         "--log", action="store_true", help="Print every update to a new line")
@@ -59,6 +61,8 @@ def generate_arg_parser():
         argument_default=argparse.SUPPRESS)
     parser_recieve.add_argument(
         "--serial-device", help="The UART device to use (e.g. '/dev/ttyAMA0')")
+    parser_recieve.add_argument(
+        "--output-path", help="CSV file to output to, none if not passed")
     parser_recieve.add_argument(
         "--log", action="store_true", help="Print every update to a new line")
     parser_recieve.set_defaults(func=ivaldi.link.recieve_monitoring_data)

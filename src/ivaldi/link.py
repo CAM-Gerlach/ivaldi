@@ -29,7 +29,7 @@ SERIAL_PARAMS = {
     }
 
 
-def recieve_data_packet(serial_port, log=False):
+def recieve_data_packet(serial_port, output_file=None, log=False):
     """
     Recieve and print an individual data packet from a serial port.
 
@@ -37,6 +37,8 @@ def recieve_data_packet(serial_port, log=False):
     ----------
     serial_port : serial.Serial
         The serial port object to read from.
+    output_file : io.IOBase or None
+        File object to output the data to. If None, prints to the screen.
     log : bool, optional
         If true, will log every update on a seperate line;
         updates one line otherwise. The default is False.
@@ -55,10 +57,20 @@ def recieve_data_packet(serial_port, log=False):
         pass
     else:
         ivaldi.monitor.pretty_print_data(*unpacked_data, log=log)
-        return unpacked_data
+
+        sensor_data_dict = {
+            key: value for key, value in zip(
+                ivaldi.monitor.VARIABLE_NAMES, unpacked_data)}
+
+        if output_file is not None:
+            ivaldi.output.write_line_csv(
+                sensor_data_dict, out_file=output_file)
+
+        return sensor_data_dict
 
 
-def recieve_monitoring_data(serial_device="/dev/ttyAMA1", log=False):
+def recieve_monitoring_data(
+        serial_device="/dev/ttyAMA1", output_path=None, log=False):
     """
     Recieve continous monitoring data from a serial port.
 
@@ -66,6 +78,8 @@ def recieve_monitoring_data(serial_device="/dev/ttyAMA1", log=False):
     ----------
     serial_device : str, optional
         The serial device to read from. The default is "/dev/ttyAMA1".
+    output_path : str or pathlib.Path
+        Path to output the data to. If None, prints to the screen.
     log : bool, optional
         If true, will log every update on a seperate line;
         updates one line otherwise. The default is False.
@@ -77,10 +91,19 @@ def recieve_monitoring_data(serial_device="/dev/ttyAMA1", log=False):
     """
     print("Recieving data...")
     with serial.Serial(serial_device, **SERIAL_PARAMS) as serial_port:
-        ivaldi.utils.run_periodic(recieve_data_packet)(
-            serial_port=serial_port,
-            log=log,
-            )
+        if output_path is not None:
+            with open(output_path, mode="a",
+                      encoding="utf-8", newline="") as out_file:
+                ivaldi.utils.run_periodic(recieve_data_packet)(
+                    serial_port=serial_port,
+                    output_file=out_file,
+                    log=log,
+                    )
+        else:
+            ivaldi.utils.run_periodic(recieve_data_packet)(
+                serial_port=serial_port,
+                log=log,
+                )
 
 
 def send_data_packet(raingauge_obj, pressure_obj, humidity_obj, serial_port):
