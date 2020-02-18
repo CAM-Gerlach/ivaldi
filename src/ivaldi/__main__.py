@@ -4,12 +4,12 @@ Main-level Ivaldi entry point.
 """
 
 # Local imports
-import ivaldi.monitor
+import ivaldi.cli
 
 
 def main():
     """Execute package-level main function."""
-    ivaldi.monitor.main()
+    ivaldi.cli.main()
 
 
 if __name__ == "__main__":

@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
 """
 Monitoring mainloop for Ivaldi.
 """
 
 # Standard library imports
-import argparse
 import signal
 import sys
 import threading
@@ -82,30 +80,3 @@ def monitor_raingauge(pin, frequency=FREQ_DEFAULT, log=False):
         while not EXIT_EVENT.is_set() and time_tosleep > 0:
             time.sleep(min(SLEEP_TICK_S, time_tosleep))
             time_tosleep -= SLEEP_TICK_S
-
-
-def main():
-    """
-    Parse command line arguments and start the rain gauge monitor mainloop.
-
-    Returns
-    -------
-    None.
-
-    """
-    arg_parser = argparse.ArgumentParser(
-        description="Simple monitor of a tipping bucket rain gauge",
-        argument_default=argparse.SUPPRESS)
-    arg_parser.add_argument(
-        "pin", type=int, help="GPIO pin to use, in SoC (Broadcom) numbering")
-    arg_parser.add_argument(
-        "--frequency", type=float, help=f"Update freq, default {FREQ_DEFAULT}")
-    arg_parser.add_argument(
-        "--log", action="store_true", help=f"Print every update to a new line")
-    parsed_args = arg_parser.parse_args()
-
-    monitor_raingauge(**vars(parsed_args))
-
-
-if __name__ == "__main__":
-    main()
