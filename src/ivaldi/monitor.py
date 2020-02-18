@@ -13,6 +13,47 @@ import ivaldi.utils
 FREQUENCY_DEFAULT = 10
 
 
+def pretty_print_raingauge(
+        time_elapsed_s, tips, rain_mm, rain_rate_mm_h, log=False):
+    """
+    Pretty print the raingauge data to the terminal.
+
+    Parameters
+    ----------
+    time_elapsed_s : numeric
+        Seconds elapsed since the beginning of observations.
+    tips : int
+        Number of rain gauge bucket tips.
+    rain_mm : numeric
+        Rain recorded, in mm.
+    rain_rate_mm_h : numeric
+        Average rain rate over observing period, in mm/h.
+    log : bool, optional
+        Log every observation instead of just updating one line.
+        The default is False.
+
+    Returns
+    -------
+    output_str : str
+        Pretty-printed output string.
+
+    """
+    output_strs = [
+        f"{time_elapsed_s:.2f} s elapsed",
+        f"{tips} tips",
+        f"{rain_mm:.1f} mm",
+        f"{rain_rate_mm_h:.2f} mm/h",
+        ]
+    output_str = " | ".join(output_strs)
+    if log:
+        print(output_str)
+    else:
+        sys.stdout.write("\r" + output_str)
+        sys.stdout.flush()
+
+    return output_str
+
+
 def check_raingauge(raingauge_obj, log=False):
     """
     Get and print one sample from the rain gauge.
@@ -30,18 +71,13 @@ def check_raingauge(raingauge_obj, log=False):
     None.
 
     """
-    output_strs = [
-        f"{round(raingauge_obj.time_elapsed_s, 2):.2f} s elapsed",
-        f"{raingauge_obj.tips} tips",
-        f"{raingauge_obj.rain_mm:.1f} mm",
-        f"{raingauge_obj.rain_rate_mm_h():.2f} mm/h",
-        ]
-    output_str = " | ".join(output_strs)
-    if log:
-        print(output_str)
-    else:
-        sys.stdout.write("\r" + output_str)
-        sys.stdout.flush()
+    pretty_print_raingauge(
+        time_elapsed_s=raingauge_obj.time_elapsed_s,
+        tips=raingauge_obj.tips,
+        rain_mm=raingauge_obj.rain_mm,
+        rain_rate_mm_h=raingauge_obj.rain_rate_mm_h(),
+        log=log,
+        )
 
 
 def monitor_raingauge(pin, frequency=FREQUENCY_DEFAULT, log=False):
@@ -66,4 +102,7 @@ def monitor_raingauge(pin, frequency=FREQUENCY_DEFAULT, log=False):
     # Mainloop to measure tipping bucket
     tipping_bucket = ivaldi.devices.raingauge.TippingBucket(pin=pin)
     ivaldi.utils.run_periodic(check_raingauge)(
-        raingauge_obj=tipping_bucket, frequency=frequency, log=log)
+        raingauge_obj=tipping_bucket,
+        frequency=frequency,
+        log=log,
+        )
