@@ -1,3 +1,4 @@
+adafruit-circuitpython-ads1x15
 adafruit-circuitpython-bmp280
 adafruit-circuitpython-sht31d
 gpiozero>=1.5.1

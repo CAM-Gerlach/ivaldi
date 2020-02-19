@@ -38,6 +38,7 @@ setuptools.setup(
     package_dir={"": "src"},
     python_requires=">=3.6",
     install_requires=[
+        "adafruit-circuitpython-ads1x15",
         "adafruit-circuitpython-bmp280",
         "adafruit-circuitpython-sht31d",
         "gpiozero",

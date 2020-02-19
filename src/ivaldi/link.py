@@ -10,12 +10,13 @@ import serial
 
 # Local imports
 import ivaldi.devices.adafruit
+import ivaldi.devices.analog
 import ivaldi.devices.counter
 import ivaldi.monitor
 import ivaldi.utils
 
 
-DATA_FORMAT = "!10f"
+DATA_FORMAT = "!11f"
 END_BYTE = b"\n"
 
 FREQUENCY_SEND = 10
@@ -107,7 +108,8 @@ def recieve_monitoring_data(
 
 
 def send_data_packet(
-        raingauge_obj, windspeed_obj, pressure_obj, humidity_obj, serial_port):
+        raingauge_obj, windspeed_obj, winddir_obj,
+        pressure_obj, humidity_obj, serial_port):
     """
     Send an indiviudal data packet to a serial port.
 
@@ -117,6 +119,8 @@ def send_data_packet(
         Initialized rain gauge instance to retrieve data from.
     windspeed_obj : ivaldi.devices.counter.AnemometerSpeed
         Initialized anemometer speed instance to retrieve data from.
+    winddir_obj : ivaldi.devices.analog.AnemometerDirection
+        Initialized anemometer direction instance to retrieve data from.
     pressure_obj : ivaldi.devices.adafruit.AdafruitBMP280
         Initialized adafruit pressure sensor to retrieve data from.
     humidity_obj : ivaldi.devices.adafruit.AdafruitSHT31D
@@ -135,6 +139,7 @@ def send_data_packet(
         raingauge_obj.output_value_average(),
         windspeed_obj.output_value_average(),
         windspeed_obj.output_value_average(period_s=60),
+        winddir_obj.value,
         pressure_obj.temperature,
         pressure_obj.pressure,
         pressure_obj.altitude,
@@ -171,6 +176,7 @@ def send_monitoring_data(
     """
     rain_gauge = ivaldi.devices.counter.TippingBucketRainGauge(pin=pin_rain)
     anemometer_speed = ivaldi.devices.counter.AnemometerSpeed(pin=pin_wind)
+    anemometer_direction = ivaldi.devices.analog.AnemometerDirection()
     pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
     humidity_sensor = ivaldi.devices.adafruit.AdafruitSHT31D()
     print("Sending data...")
@@ -178,6 +184,7 @@ def send_monitoring_data(
         ivaldi.utils.run_periodic(send_data_packet)(
             raingauge_obj=rain_gauge,
             windspeed_obj=anemometer_speed,
+            winddir_obj=anemometer_direction,
             pressure_obj=pressure_sensor,
             humidity_obj=humidity_sensor,
             serial_port=serial_port,
