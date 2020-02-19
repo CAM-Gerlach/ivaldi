@@ -11,13 +11,16 @@ import gpiozero
 
 # General constants
 CONVERSION_FACTOR = 1
-PRECISION_DEFAULT = 2
+PRECISION_DEFAULT = 6
 S_IN_HR = 3600
 
 # Rain gauge constants
-MM_PER_TIP = 0.2
-RAIN_PRECISION_MM = 1
-RAIN_RATE_PRECISION_MM = 2
+RAIN_MM_PER_COUNT = 0.2
+RAIN_AVERAGE_PERIOD_S = 60 * 5
+
+# Anemometer speed constants
+WIND_M_PER_COUNT = 1.00584
+WIND_AVERAGE_PERIOD_S = 3
 
 
 class CountDevice():
@@ -126,7 +129,7 @@ class TippingBucketRainGauge(CountDevice):
 
     Parameters
     ----------
-    pin : int, optional
+    pin : int
         The GPIO pin to use, in BCM numbering.
 
     conversion_factor : float, optional
@@ -135,13 +138,13 @@ class TippingBucketRainGauge(CountDevice):
 
     """
 
-    def __init__(self, **count_args):
+    def __init__(self, conversion_factor=RAIN_MM_PER_COUNT, **kwargs):
         """See class docstring for full details."""
-        super().__init__(**{**{"conversion_factor": MM_PER_TIP}, **count_args})
+        super().__init__(conversion_factor=conversion_factor, **kwargs)
 
     def output_value_average(self, period_s=None):
         """
-        Get the output value, in counts per second, since the last reset.
+        Get the output value, in mm per second, over the period.
 
         Specific to rain gauges, produces results in mm per hour, not per s.
 
@@ -152,3 +155,35 @@ class TippingBucketRainGauge(CountDevice):
 
         """
         return super().output_value_average(period_s=period_s) * S_IN_HR
+
+
+class AnemometerSpeed(CountDevice):
+    """
+    A pulse count anemometer measuring wind speed, connected via hi/lo GPIO.
+
+    Parameters
+    ----------
+    pin : int
+        The GPIO pin to use, in BCM numbering.
+
+    conversion_factor : float, optional
+        The conversion factor between the count and the processed output.
+        The default is 1.00584 m per count.
+
+    """
+
+    def __init__(self, conversion_factor=WIND_M_PER_COUNT, **kwargs):
+        """See class docstring for full details."""
+        super().__init__(conversion_factor=conversion_factor, **kwargs)
+
+    def output_value_average(self, period_s=WIND_AVERAGE_PERIOD_S):
+        """
+        Get the output value, in meters per second, over the period.
+
+        Returns
+        -------
+        output_value_average : float
+            Output value averaged over the time since either reset or passed.
+
+        """
+        return super().output_value_average(period_s=period_s)

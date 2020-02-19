@@ -15,7 +15,7 @@ import ivaldi.monitor
 import ivaldi.utils
 
 
-DATA_FORMAT = "!fIfffffff"
+DATA_FORMAT = "!10f"
 END_BYTE = b"\n"
 
 FREQUENCY_SEND = 10
@@ -106,14 +106,17 @@ def recieve_monitoring_data(
                 )
 
 
-def send_data_packet(raingauge_obj, pressure_obj, humidity_obj, serial_port):
+def send_data_packet(
+        raingauge_obj, windspeed_obj, pressure_obj, humidity_obj, serial_port):
     """
     Send an indiviudal data packet to a serial port.
 
     Parameters
     ----------
-    raingauge_obj : ivaldi.devices.raingauge.TippingBucketRainGauge
+    raingauge_obj : ivaldi.devices.counter.TippingBucketRainGauge
         Initialized rain gauge instance to retrieve data from.
+    windspeed_obj : ivaldi.devices.counter.AnemometerSpeed
+        Initialized anemometer speed instance to retrieve data from.
     pressure_obj : ivaldi.devices.adafruit.AdafruitBMP280
         Initialized adafruit pressure sensor to retrieve data from.
     humidity_obj : ivaldi.devices.adafruit.AdafruitSHT31D
@@ -128,9 +131,10 @@ def send_data_packet(raingauge_obj, pressure_obj, humidity_obj, serial_port):
     """
     data_to_pack = [
         raingauge_obj.time_elapsed_s,
-        raingauge_obj.count,
         raingauge_obj.output_value_total,
         raingauge_obj.output_value_average(),
+        windspeed_obj.output_value_average(),
+        windspeed_obj.output_value_average(period_s=60),
         pressure_obj.temperature,
         pressure_obj.pressure,
         pressure_obj.altitude,
@@ -142,14 +146,19 @@ def send_data_packet(raingauge_obj, pressure_obj, humidity_obj, serial_port):
 
 
 def send_monitoring_data(
-        pin, serial_device="/dev/ttyAMA0", frequency=FREQUENCY_SEND):
+        pin_rain, pin_wind,
+        serial_device="/dev/ttyAMA0",
+        frequency=FREQUENCY_SEND,
+        ):
     """
     Send continous monitoring data to a serial port.
 
     Parameters
     ----------
-    pin : int
-        The GPIO pin to use, in BCM numbering.
+    pin_rain : int
+        The GPIO pin to use for the rain gauge, in BCM numbering.
+    pin_wind : int
+        The GPIO pin to use for the anemometer, in BCM numbering.
     serial_device : str, optional
         The serial device to read from. The default is "/dev/ttyAMA1".
     frequency : float, optional
@@ -160,13 +169,15 @@ def send_monitoring_data(
     None.
 
     """
-    rain_gauge = ivaldi.devices.counter.TippingBucketRainGauge(pin=pin)
+    rain_gauge = ivaldi.devices.counter.TippingBucketRainGauge(pin=pin_rain)
+    anemometer_speed = ivaldi.devices.counter.AnemometerSpeed(pin=pin_wind)
     pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
     humidity_sensor = ivaldi.devices.adafruit.AdafruitSHT31D()
     print("Sending data...")
     with serial.Serial(serial_device, **SERIAL_PARAMS) as serial_port:
         ivaldi.utils.run_periodic(send_data_packet)(
             raingauge_obj=rain_gauge,
+            windspeed_obj=anemometer_speed,
             pressure_obj=pressure_sensor,
             humidity_obj=humidity_sensor,
             serial_port=serial_port,

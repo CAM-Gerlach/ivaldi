@@ -16,13 +16,14 @@ FREQUENCY_DEFAULT = 10
 
 VARIABLE_NAMES = [
     "time_elapsed_s",
-    "tips",
     "rain_mm",
     "rain_rate_mm_h",
-    "temperature_bmp280",
-    "pressure",
-    "altitude",
-    "temperature_sht31d",
+    "wind_gust_m_s_3s",
+    "wind_sustained_m_s_10min",
+    "temperature_bmp280_C",
+    "pressure_hPa",
+    "altitude_m",
+    "temperature_sht31d_C",
     "relative_humidity",
     ]
 
@@ -46,15 +47,16 @@ def pretty_print_data(*data_to_print, log=False):
 
     """
     output_strs = [
-        "{:.2f} s",
-        "{} tips",
-        "{:.1f} mm",
-        "{:.2f} mm/h",
-        "{:.2f} C",
-        "{:.2f} hPa",
-        "{:.2f} m",
-        "{:.2f} C",
-        "{:.2f} %",
+        "{:.2f}s",
+        "{:.1f}mm",
+        "{:.2f}mm/h (5min)",
+        "{:.2f}m/s (3s)",
+        "{:.2f}m/s (10min)",
+        "{:.2f}C",
+        "{:.2f}hPa",
+        "{:.2f}m",
+        "{:.2f}C",
+        "{:.2f}%",
         ]
     output_str = " | ".join(output_strs)
     output_str = output_str.format(*data_to_print)
@@ -68,15 +70,17 @@ def pretty_print_data(*data_to_print, log=False):
     return output_str
 
 
-def get_sensor_data(raingauge_obj, pressure_obj, humidity_obj,
+def get_sensor_data(raingauge_obj, windspeed_obj, pressure_obj, humidity_obj,
                     output_file=None, log=False):
     """
     Get and print one sample from the sensors.
 
     Parameters
     ----------
-    raingauge_obj : ivaldi.devices.raingauge.TippingBucketRainGauge
+    raingauge_obj : ivaldi.devices.counter.TippingBucketRainGauge
         Initialized rain gauge instance to retrieve data from.
+    windspeed_obj : ivaldi.devices.counter.AnemometerSpeed
+        Initialized anemometer speed instance to retrieve data from.
     pressure_obj : ivaldi.devices.adafruit.AdafruitBMP280
         Initialized adafruit pressure sensor to retrieve data from.
     humidity_obj : ivaldi.devices.adafruit.AdafruitSHT31D
@@ -94,9 +98,10 @@ def get_sensor_data(raingauge_obj, pressure_obj, humidity_obj,
     """
     sensor_data = [
         raingauge_obj.time_elapsed_s,
-        raingauge_obj.count,
         raingauge_obj.output_value_total,
         raingauge_obj.output_value_average(),
+        windspeed_obj.output_value_average(),
+        windspeed_obj.output_value_average(period_s=60 * 10),
         pressure_obj.temperature,
         pressure_obj.pressure,
         pressure_obj.altitude,
@@ -114,15 +119,17 @@ def get_sensor_data(raingauge_obj, pressure_obj, humidity_obj,
     return sensor_data_dict
 
 
-def monitor_sensors(pin, frequency=FREQUENCY_DEFAULT,
+def monitor_sensors(pin_rain, pin_wind, frequency=FREQUENCY_DEFAULT,
                     output_path=None, log=False):
     """
     Mainloop for continously reporting key metrics from the rain gauge.
 
     Parameters
     ----------
-    pin : int
+    pin_rain : int
         The GPIO pin to use for the rain gauge, in BCM numbering.
+    pin_wind : int
+        The GPIO pin to use for the anemometer, in BCM numbering.
     frequency : float, optional
         The frequency at which to update, in Hz. The default is 10 Hz.
     output_path : str or pathlib.Path
@@ -137,12 +144,14 @@ def monitor_sensors(pin, frequency=FREQUENCY_DEFAULT,
 
     """
     # Mainloop to measure tipping bucket
-    rain_gauge = ivaldi.devices.counter.TippingBucketRainGauge(pin=pin)
+    rain_gauge = ivaldi.devices.counter.TippingBucketRainGauge(pin=pin_rain)
+    anemometer_speed = ivaldi.devices.counter.AnemometerSpeed(pin=pin_wind)
     pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
     humidity_sensor = ivaldi.devices.adafruit.AdafruitSHT31D()
 
     sensor_params = {
         "raingauge_obj": rain_gauge,
+        "windspeed_obj": anemometer_speed,
         "pressure_obj": pressure_sensor,
         "humidity_obj": humidity_sensor,
         "frequency": frequency,

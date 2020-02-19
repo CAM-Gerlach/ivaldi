@@ -35,37 +35,39 @@ def generate_arg_parser():
     parser_monitor = subparsers.add_parser(
         "monitor", help="Monitor the sensor status and print to the terminal",
         argument_default=argparse.SUPPRESS)
-    parser_monitor.add_argument(
-        "pin", type=int, help="GPIO pin to use, in BCM (Broadcom) numbering")
-    parser_monitor.add_argument(
-        "--output-path", help="CSV file to output to, none if not passed")
-    parser_monitor.add_argument(
-        "--frequency", type=float, help="Update frequency, in Hz")
-    parser_monitor.add_argument(
-        "--log", action="store_true", help="Print every update to a new line")
     parser_monitor.set_defaults(func=ivaldi.monitor.monitor_sensors)
 
     parser_send = subparsers.add_parser(
         "send", help="Monitor the connected sensor and send the data via UART",
         argument_default=argparse.SUPPRESS)
-    parser_send.add_argument(
-        "pin", type=int, help="GPIO pin to use, in BCM (Broadcom) numbering")
-    parser_send.add_argument(
-        "--serial-device", help="The UART device to use (e.g. '/dev/ttyAMA0')")
-    parser_send.add_argument(
-        "--frequency", type=float, help="Update frequency, in Hz")
     parser_send.set_defaults(func=ivaldi.link.send_monitoring_data)
 
     parser_recieve = subparsers.add_parser(
         "recieve", help="Recieve and print the IoT sensor data via UART",
         argument_default=argparse.SUPPRESS)
-    parser_recieve.add_argument(
-        "--serial-device", help="The UART device to use (e.g. '/dev/ttyAMA0')")
-    parser_recieve.add_argument(
-        "--output-path", help="CSV file to output to, none if not passed")
-    parser_recieve.add_argument(
-        "--log", action="store_true", help="Print every update to a new line")
     parser_recieve.set_defaults(func=ivaldi.link.recieve_monitoring_data)
+
+    for parser in [parser_monitor, parser_send]:
+        parser.add_argument(
+            "pin_rain", type=int,
+            help="GPIO pin to use for rain gauge, in BCM (Broadcom) numbering")
+        parser.add_argument(
+            "pin_wind", type=int,
+            help="GPIO pin to use for wind speed, in BCM (Broadcom) numbering")
+        parser.add_argument(
+            "--frequency", type=float, help="Update frequency, in Hz")
+
+    for parser in [parser_monitor, parser_recieve]:
+        parser.add_argument(
+            "--output-path", help="CSV file to output to, none if not passed")
+        parser.add_argument(
+            "--log", action="store_true",
+            help="Print every update to a new line")
+
+    for parser in [parser_send, parser_recieve]:
+        parser.add_argument(
+            "--serial-device",
+            help="The UART device to use (e.g. '/dev/ttyAMA0')")
 
     return parser_main
 
