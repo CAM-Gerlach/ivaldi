@@ -16,8 +16,7 @@ import ivaldi.monitor
 import ivaldi.utils
 
 
-DATA_FORMAT = "!11f"
-END_BYTE = b"\n"
+DATA_FORMAT = "!6fI5f"
 
 FREQUENCY_SEND = 10
 
@@ -26,7 +25,7 @@ SERIAL_PARAMS = {
     "parity": serial.PARITY_NONE,
     "stopbits": serial.STOPBITS_ONE,
     "bytesize": serial.EIGHTBITS,
-    "timeout": 0.1,
+    "timeout": 1,
     }
 
 
@@ -50,7 +49,9 @@ def recieve_data_packet(serial_port, output_file=None, log=False):
         The unpacked and decoded data recieved, if any; else None.
 
     """
-    recieved_data = serial_port.read_until(END_BYTE).strip()
+    recieved_data = serial_port.read(size=struct.calcsize(DATA_FORMAT))
+    if not recieved_data:
+        return None
     try:
         unpacked_data = struct.unpack(DATA_FORMAT, recieved_data)
     # Ignore errors reading the data and continue
@@ -108,7 +109,7 @@ def recieve_monitoring_data(
 
 
 def send_data_packet(
-        raingauge_obj, windspeed_obj, winddir_obj,
+        raingauge_obj, windspeed_obj, winddir_obj, soilmoisture_obj,
         pressure_obj, humidity_obj, serial_port):
     """
     Send an indiviudal data packet to a serial port.
@@ -121,6 +122,8 @@ def send_data_packet(
         Initialized anemometer speed instance to retrieve data from.
     winddir_obj : ivaldi.devices.analog.AnemometerDirection
         Initialized anemometer direction instance to retrieve data from.
+    soilmoisture_obj : ivaldi.devices.analog.SoilMoisture
+        Initialized soil moisture sensor instance to retrieve data from.
     pressure_obj : ivaldi.devices.adafruit.AdafruitBMP280
         Initialized adafruit pressure sensor to retrieve data from.
     humidity_obj : ivaldi.devices.adafruit.AdafruitSHT31D
@@ -140,18 +143,19 @@ def send_data_packet(
         windspeed_obj.output_value_average(),
         windspeed_obj.output_value_average(period_s=60),
         winddir_obj.value,
+        soilmoisture_obj.value,
         pressure_obj.temperature,
         pressure_obj.pressure,
         pressure_obj.altitude,
         humidity_obj.temperature,
         humidity_obj.relative_humidity,
         ]
-    data_packet = struct.pack(DATA_FORMAT, *data_to_pack) + END_BYTE
+    data_packet = struct.pack(DATA_FORMAT, *data_to_pack)
     serial_port.write(data_packet)
 
 
 def send_monitoring_data(
-        pin_rain, pin_wind,
+        pin_rain, pin_wind, channel_wind, channel_soil,
         serial_device="/dev/ttyAMA0",
         frequency=FREQUENCY_SEND,
         ):
@@ -176,7 +180,10 @@ def send_monitoring_data(
     """
     rain_gauge = ivaldi.devices.counter.TippingBucketRainGauge(pin=pin_rain)
     anemometer_speed = ivaldi.devices.counter.AnemometerSpeed(pin=pin_wind)
-    anemometer_direction = ivaldi.devices.analog.AnemometerDirection()
+    anemometer_direction = ivaldi.devices.analog.AnemometerDirection(
+        channel=channel_wind)
+    soil_moisture = ivaldi.devices.analog.SoilMoisture(
+        channel=channel_soil)
     pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
     humidity_sensor = ivaldi.devices.adafruit.AdafruitSHT31D()
     print("Sending data...")
@@ -185,6 +192,7 @@ def send_monitoring_data(
             raingauge_obj=rain_gauge,
             windspeed_obj=anemometer_speed,
             winddir_obj=anemometer_direction,
+            soilmoisture_obj=soil_moisture,
             pressure_obj=pressure_sensor,
             humidity_obj=humidity_sensor,
             serial_port=serial_port,

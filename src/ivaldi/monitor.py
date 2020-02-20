@@ -22,6 +22,7 @@ VARIABLE_NAMES = [
     "wind_gust_m_s_3s",
     "wind_sustained_m_s_10min",
     "wind_direction_deg_n",
+    "soil_moisture_raw",
     "temperature_bmp280_C",
     "pressure_hPa",
     "altitude_m",
@@ -55,6 +56,7 @@ def pretty_print_data(*data_to_print, log=False):
         "{:.2f}m/s (3s)",
         "{:.2f}m/s (10min)",
         "{:.2f}deg",
+        "{}",
         "{:.2f}C",
         "{:.2f}hPa",
         "{:.2f}m",
@@ -74,7 +76,7 @@ def pretty_print_data(*data_to_print, log=False):
 
 
 def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
-                    pressure_obj, humidity_obj,
+                    soilmoisture_obj, pressure_obj, humidity_obj,
                     output_file=None, log=False):
     """
     Get and print one sample from the sensors.
@@ -87,6 +89,8 @@ def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
         Initialized anemometer speed instance to retrieve data from.
     winddir_obj : ivaldi.devices.analog.AnemometerDirection
         Initialized anemometer direction instance to retrieve data from.
+    soilmoisture_obj : ivaldi.devices.analog.SoilMoisture
+        Initialized soil moisture sensor instance to retrieve data from.
     pressure_obj : ivaldi.devices.adafruit.AdafruitBMP280
         Initialized adafruit pressure sensor to retrieve data from.
     humidity_obj : ivaldi.devices.adafruit.AdafruitSHT31D
@@ -109,6 +113,7 @@ def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
         windspeed_obj.output_value_average(),
         windspeed_obj.output_value_average(period_s=60 * 10),
         winddir_obj.value,
+        soilmoisture_obj.value,
         pressure_obj.temperature,
         pressure_obj.pressure,
         pressure_obj.altitude,
@@ -126,8 +131,8 @@ def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
     return sensor_data_dict
 
 
-def monitor_sensors(pin_rain, pin_wind, frequency=FREQUENCY_DEFAULT,
-                    output_path=None, log=False):
+def monitor_sensors(pin_rain, pin_wind, channel_wind, channel_soil,
+                    frequency=FREQUENCY_DEFAULT, output_path=None, log=False):
     """
     Mainloop for continously reporting key metrics from the rain gauge.
 
@@ -137,6 +142,10 @@ def monitor_sensors(pin_rain, pin_wind, frequency=FREQUENCY_DEFAULT,
         The GPIO pin to use for the rain gauge, in BCM numbering.
     pin_wind : int
         The GPIO pin to use for the anemometer, in BCM numbering.
+    channel_wind : int
+        The ADC channel (0-3) to use for the wind direction sensor.
+    channel_soil : int
+        The ADC channel (0-3) to use for the soil moisture sensor.
     frequency : float, optional
         The frequency at which to update, in Hz. The default is 10 Hz.
     output_path : str or pathlib.Path
@@ -153,7 +162,10 @@ def monitor_sensors(pin_rain, pin_wind, frequency=FREQUENCY_DEFAULT,
     # Mainloop to measure tipping bucket
     rain_gauge = ivaldi.devices.counter.TippingBucketRainGauge(pin=pin_rain)
     anemometer_speed = ivaldi.devices.counter.AnemometerSpeed(pin=pin_wind)
-    anemometer_direction = ivaldi.devices.analog.AnemometerDirection()
+    anemometer_direction = ivaldi.devices.analog.AnemometerDirection(
+        channel=channel_wind)
+    soil_moisture = ivaldi.devices.analog.SoilMoisture(
+        channel=channel_soil)
     pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
     humidity_sensor = ivaldi.devices.adafruit.AdafruitSHT31D()
 
@@ -161,6 +173,7 @@ def monitor_sensors(pin_rain, pin_wind, frequency=FREQUENCY_DEFAULT,
         "raingauge_obj": rain_gauge,
         "windspeed_obj": anemometer_speed,
         "winddir_obj": anemometer_direction,
+        "soilmoisture_obj": soil_moisture,
         "pressure_obj": pressure_sensor,
         "humidity_obj": humidity_sensor,
         "frequency": frequency,

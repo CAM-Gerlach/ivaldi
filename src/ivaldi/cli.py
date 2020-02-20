@@ -55,6 +55,12 @@ def generate_arg_parser():
             "pin_wind", type=int,
             help="GPIO pin to use for wind speed, in BCM (Broadcom) numbering")
         parser.add_argument(
+            "channel_wind", type=int,
+            help="ADC channel (0-3) to use for the wind direction sensor")
+        parser.add_argument(
+            "channel_soil", type=int,
+            help="ADC channel (0-3) to use for the soil moisture sensor")
+        parser.add_argument(
             "--frequency", type=float, help="Update frequency, in Hz")
 
     for parser in [parser_monitor, parser_recieve]:

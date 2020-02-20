@@ -9,6 +9,10 @@ import ivaldi.devices.adafruit
 WIND_DEFAULT_OFFSET = 4.66
 WIND_DEFAULT_SCALE = 0.013113
 
+# Wind direction constants
+SOIL_DEFAULT_OFFSET = 0
+SOIL_DEFAULT_SCALE = 1
+
 
 class AnalogMeasurementMixin():
     """
@@ -53,6 +57,30 @@ class AnemometerDirection(AnalogMeasurementMixin,
             self,
             scale=WIND_DEFAULT_SCALE,
             offset=WIND_DEFAULT_OFFSET,
+            **adc_args,
+            ):  # pylint: disable=C0330
+        """See class docstring for full details."""
+        super().__init__(scale=scale, offset=offset, **adc_args)
+
+
+class SoilMoisture(AnalogMeasurementMixin,
+                   ivaldi.devices.adafruit.AdafruitADS1115):
+    """
+    Class for an analog soil moisture sensor.
+
+    Parameters
+    ----------
+    scale : numeric, optional
+        The value to scale the output by. The default is 1.
+    offset : numeric, optional
+        The value to offset the output by. The default is 0.
+
+    """
+
+    def __init__(
+            self,
+            scale=SOIL_DEFAULT_SCALE,
+            offset=SOIL_DEFAULT_OFFSET,
             **adc_args,
             ):  # pylint: disable=C0330
         """See class docstring for full details."""
