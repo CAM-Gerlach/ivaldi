@@ -61,7 +61,7 @@ def pretty_print_data(*data_to_print, log=False):
         "{:.2f}C",
         "{:.2f}%",
         ]
-    output_str = " | ".join(output_strs)
+    output_str = "|".join(output_strs)
     output_str = output_str.format(*data_to_print)
 
     if log:
