@@ -16,7 +16,7 @@ import ivaldi.monitor
 import ivaldi.utils
 
 
-DATA_FORMAT = "!7fI5f"
+DATA_FORMAT = "!12fI"
 
 PERIOD_S_DEFAULT = 1
 
@@ -140,18 +140,18 @@ def send_data_packet(raingauge_obj, windspeed_obj, winddir_obj,
     """
     data_to_pack = [
         raingauge_obj.time_elapsed_s,
-        raingauge_obj.output_value_total,
-        raingauge_obj.output_value_average(),
-        windspeed_obj.output_value_average(),
-        windspeed_obj.output_value_average(period_s=60),
-        winddir_obj.value,
-        soiltemperature_obj.value,
-        soilmoisture_obj.value,
         pressure_obj.temperature,
         pressure_obj.pressure,
         pressure_obj.altitude,
         humidity_obj.temperature,
         humidity_obj.relative_humidity,
+        windspeed_obj.output_value_average(period_s=3),
+        windspeed_obj.output_value_average(period_s=60 * 10),
+        winddir_obj.value,
+        raingauge_obj.output_value_total,
+        raingauge_obj.output_value_average(),
+        soiltemperature_obj.value,
+        soilmoisture_obj.value,
         ]
     data_packet = struct.pack(DATA_FORMAT, *data_to_pack)
     serial_port.write(data_packet)

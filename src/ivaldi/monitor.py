@@ -18,18 +18,18 @@ PERIOD_S_DEFAULT = 1
 
 VARIABLE_NAMES = [
     "time_elapsed_s",
-    "rain_mm",
-    "rain_rate_mm_h",
-    "wind_gust_m_s_3s",
-    "wind_sustained_m_s_10min",
-    "wind_direction_deg_n",
-    "soil_temperature_C",
-    "soil_moisture_raw",
     "temperature_bmp280_C",
     "pressure_hPa",
     "altitude_m",
     "temperature_sht31d_C",
     "relative_humidity",
+    "wind_gust_m_s_3s",
+    "wind_sustained_m_s_10min",
+    "wind_direction_deg_n",
+    "rain_mm",
+    "rain_rate_mm_h",
+    "soil_temperature_C",
+    "soil_moisture_raw",
     ]
 
 
@@ -53,18 +53,18 @@ def pretty_print_data(*data_to_print, log=False):
     """
     output_strs = [
         "{:.1f}s",
-        "{:.1f}mm",
-        "{:.2f}mm/h(5min)",
-        "{:.2f}m/s(3s)",
-        "{:.2f}m/s(10min)",
-        "{:.1f}deg",
-        "{:.2f}C",
-        "{}",
         "{:.2f}C",
         "{:.2f}hPa",
         "{:.2f}m",
         "{:.2f}C",
         "{:.2f}%",
+        "{:.2f}m/s(3s)",
+        "{:.2f}m/s(10min)",
+        "{:.1f}deg",
+        "{:.1f}mm",
+        "{:.2f}mm/h(5min)",
+        "{:.2f}C",
+        "{}",
         ]
     output_str = "|".join(output_strs)
     output_str = output_str.format(*data_to_print)
@@ -114,18 +114,18 @@ def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
     """
     sensor_data = [
         raingauge_obj.time_elapsed_s,
-        raingauge_obj.output_value_total,
-        raingauge_obj.output_value_average(),
-        windspeed_obj.output_value_average(),
-        windspeed_obj.output_value_average(period_s=60 * 10),
-        winddir_obj.value,
-        soiltemperature_obj.value,
-        soilmoisture_obj.value,
         pressure_obj.temperature,
         pressure_obj.pressure,
         pressure_obj.altitude,
         humidity_obj.temperature,
         humidity_obj.relative_humidity,
+        windspeed_obj.output_value_average(period_s=3),
+        windspeed_obj.output_value_average(period_s=60 * 10),
+        winddir_obj.value,
+        raingauge_obj.output_value_total,
+        raingauge_obj.output_value_average(),
+        soiltemperature_obj.value,
+        soilmoisture_obj.value,
         ]
     sensor_data_dict = {
         key: value for key, value in zip(VARIABLE_NAMES, sensor_data)}
