@@ -61,7 +61,7 @@ def generate_arg_parser():
             "channel_soil", type=int,
             help="ADC channel (0-3) to use for the soil moisture sensor")
         parser.add_argument(
-            "--frequency", type=float, help="Update frequency, in Hz")
+            "--period-s", type=float, help="Update period, in s")
 
     for parser in [parser_monitor, parser_recieve]:
         parser.add_argument(

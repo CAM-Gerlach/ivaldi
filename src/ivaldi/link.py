@@ -18,7 +18,7 @@ import ivaldi.utils
 
 DATA_FORMAT = "!7fI5f"
 
-FREQUENCY_SEND = 10
+PERIOD_S_DEFAULT = 1
 
 SERIAL_PARAMS = {
     "baudrate": 9600,
@@ -93,19 +93,18 @@ def recieve_monitoring_data(
     """
     print("Recieving data...")
     with serial.Serial(serial_device, **SERIAL_PARAMS) as serial_port:
+        recieve_args = {
+            "serial_port": serial_port,
+            "period_s": 0,
+            "log": log
+            }
         if output_path is not None:
             with open(output_path, mode="a",
                       encoding="utf-8", newline="") as out_file:
                 ivaldi.utils.run_periodic(recieve_data_packet)(
-                    serial_port=serial_port,
-                    output_file=out_file,
-                    log=log,
-                    )
+                    output_file=out_file, **recieve_args)
         else:
-            ivaldi.utils.run_periodic(recieve_data_packet)(
-                serial_port=serial_port,
-                log=log,
-                )
+            ivaldi.utils.run_periodic(recieve_data_packet)(**recieve_args)
 
 
 def send_data_packet(raingauge_obj, windspeed_obj, winddir_obj,
@@ -161,7 +160,7 @@ def send_data_packet(raingauge_obj, windspeed_obj, winddir_obj,
 def send_monitoring_data(
         pin_rain, pin_wind, channel_wind, channel_soil,
         serial_device="/dev/ttyAMA0",
-        frequency=FREQUENCY_SEND,
+        period_s=PERIOD_S_DEFAULT,
         ):
     """
     Send continous monitoring data to a serial port.
@@ -174,8 +173,8 @@ def send_monitoring_data(
         The GPIO pin to use for the anemometer, in BCM numbering.
     serial_device : str, optional
         The serial device to read from. The default is "/dev/ttyAMA1".
-    frequency : float, optional
-        The frequency at which to update, in Hz. The default is 10 Hz.
+    period_s : float, optional
+        The period at which to update, in s. The default is 1 s.
 
     Returns
     -------
@@ -202,5 +201,5 @@ def send_monitoring_data(
             pressure_obj=pressure_sensor,
             humidity_obj=humidity_sensor,
             serial_port=serial_port,
-            frequency=frequency,
+            period_s=period_s,
             )

@@ -14,7 +14,7 @@ import ivaldi.output
 import ivaldi.utils
 
 
-FREQUENCY_DEFAULT = 10
+PERIOD_S_DEFAULT = 1
 
 VARIABLE_NAMES = [
     "time_elapsed_s",
@@ -139,7 +139,7 @@ def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
 
 
 def monitor_sensors(pin_rain, pin_wind, channel_wind, channel_soil,
-                    frequency=FREQUENCY_DEFAULT, output_path=None, log=False):
+                    period_s=PERIOD_S_DEFAULT, output_path=None, log=False):
     """
     Mainloop for continously reporting key metrics from the rain gauge.
 
@@ -153,8 +153,8 @@ def monitor_sensors(pin_rain, pin_wind, channel_wind, channel_soil,
         The ADC channel (0-3) to use for the wind direction sensor.
     channel_soil : int
         The ADC channel (0-3) to use for the soil moisture sensor.
-    frequency : float, optional
-        The frequency at which to update, in Hz. The default is 10 Hz.
+    period_s : float, optional
+        The period at which to update, in s. The default is 1 s.
     output_path : str or pathlib.Path
         Path to output the data to. If None, prints to the screen.
     log : bool, optional
@@ -185,7 +185,7 @@ def monitor_sensors(pin_rain, pin_wind, channel_wind, channel_soil,
         "soilmoisture_obj": soil_moisture,
         "pressure_obj": pressure_sensor,
         "humidity_obj": humidity_sensor,
-        "frequency": frequency,
+        "period_s": period_s,
         "log": log,
         }
     if output_path is not None:

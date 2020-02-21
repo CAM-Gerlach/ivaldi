@@ -10,9 +10,10 @@ import time
 
 
 EXIT_EVENT = threading.Event()
+PERIOD_S_DEFAULT = 1
 SIGNALS_SET = ["SIG" + signame for signame in {"TERM", "HUP", "INT", "BREAK"}]
 SLEEP_TICK_S = 0.5
-SLEEP_TIME_MIN = 0.01
+SLEEP_TIME_MINIMUM = 0.01
 
 
 def _quit_handler(signo, _frame):
@@ -33,25 +34,21 @@ def _set_signal_handler(signal_handler, signals=SIGNALS_SET):
 def run_periodic(func):
     """Decorator to run a function at a periodic interval w/signal handling."""
     @functools.wraps(func)
-    def _run_periodic(*args, period=None, frequency=None, **kwargs):
-        # Calculate sleep time
-        if period is not None:
-            sleep_time = period
-        elif frequency is not None:
-            sleep_time = SLEEP_TIME_MIN if frequency == 0 else 1 / frequency
-        else:
-            sleep_time = SLEEP_TIME_MIN
+    def _run_periodic(*args, period_s=PERIOD_S_DEFAULT, **kwargs):
 
         # Set up quit signal handler
         _set_signal_handler(_quit_handler)
 
         # Mainloop to measure tipping bucket
         while not EXIT_EVENT.is_set():
+            wakeup_time = time.monotonic() + period_s
+
             func(*args, **kwargs)
 
-            time_tosleep = sleep_time
-            while not EXIT_EVENT.is_set() and time_tosleep > 0:
-                time.sleep(min(SLEEP_TICK_S, time_tosleep))
-                time_tosleep -= SLEEP_TICK_S
+            if wakeup_time <= time.monotonic():
+                wakeup_time = time.monotonic() + SLEEP_TIME_MINIMUM
+            while not EXIT_EVENT.is_set() and wakeup_time > time.monotonic():
+                time.sleep(max(
+                    min(SLEEP_TICK_S, wakeup_time - time.monotonic()), 0))
 
     return _run_periodic
