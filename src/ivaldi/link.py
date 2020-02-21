@@ -16,7 +16,7 @@ import ivaldi.monitor
 import ivaldi.utils
 
 
-DATA_FORMAT = "!6fI5f"
+DATA_FORMAT = "!7fI5f"
 
 FREQUENCY_SEND = 10
 
@@ -108,9 +108,10 @@ def recieve_monitoring_data(
                 )
 
 
-def send_data_packet(
-        raingauge_obj, windspeed_obj, winddir_obj, soilmoisture_obj,
-        pressure_obj, humidity_obj, serial_port):
+def send_data_packet(raingauge_obj, windspeed_obj, winddir_obj,
+                     soiltemperature_obj, soilmoisture_obj,
+                     pressure_obj, humidity_obj,
+                     serial_port):
     """
     Send an indiviudal data packet to a serial port.
 
@@ -122,6 +123,8 @@ def send_data_packet(
         Initialized anemometer speed instance to retrieve data from.
     winddir_obj : ivaldi.devices.analog.AnemometerDirection
         Initialized anemometer direction instance to retrieve data from.
+    soiltemperature_obj : ivaldi.devices.onewire.MaximDS18B20
+        Initialized soil temperature sensor instance to retrieve data from.
     soilmoisture_obj : ivaldi.devices.analog.SoilMoisture
         Initialized soil moisture sensor instance to retrieve data from.
     pressure_obj : ivaldi.devices.adafruit.AdafruitBMP280
@@ -143,6 +146,7 @@ def send_data_packet(
         windspeed_obj.output_value_average(),
         windspeed_obj.output_value_average(period_s=60),
         winddir_obj.value,
+        soiltemperature_obj.value,
         soilmoisture_obj.value,
         pressure_obj.temperature,
         pressure_obj.pressure,
@@ -182,6 +186,7 @@ def send_monitoring_data(
     anemometer_speed = ivaldi.devices.counter.AnemometerSpeed(pin=pin_wind)
     anemometer_direction = ivaldi.devices.analog.AnemometerDirection(
         channel=channel_wind)
+    soil_temperature = ivaldi.devices.onewire.MaximDS18B20()
     soil_moisture = ivaldi.devices.analog.SoilMoisture(
         channel=channel_soil)
     pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
@@ -192,6 +197,7 @@ def send_monitoring_data(
             raingauge_obj=rain_gauge,
             windspeed_obj=anemometer_speed,
             winddir_obj=anemometer_direction,
+            soiltemperature_obj=soil_temperature,
             soilmoisture_obj=soil_moisture,
             pressure_obj=pressure_sensor,
             humidity_obj=humidity_sensor,

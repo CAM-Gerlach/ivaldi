@@ -9,6 +9,7 @@ import sys
 import ivaldi.devices.adafruit
 import ivaldi.devices.analog
 import ivaldi.devices.counter
+import ivaldi.devices.onewire
 import ivaldi.output
 import ivaldi.utils
 
@@ -22,6 +23,7 @@ VARIABLE_NAMES = [
     "wind_gust_m_s_3s",
     "wind_sustained_m_s_10min",
     "wind_direction_deg_n",
+    "soil_temperature_C",
     "soil_moisture_raw",
     "temperature_bmp280_C",
     "pressure_hPa",
@@ -50,12 +52,13 @@ def pretty_print_data(*data_to_print, log=False):
 
     """
     output_strs = [
-        "{:.2f}s",
+        "{:.1f}s",
         "{:.1f}mm",
-        "{:.2f}mm/h (5min)",
-        "{:.2f}m/s (3s)",
-        "{:.2f}m/s (10min)",
-        "{:.2f}deg",
+        "{:.2f}mm/h(5min)",
+        "{:.2f}m/s(3s)",
+        "{:.2f}m/s(10min)",
+        "{:.1f}deg",
+        "{:.2f}C",
         "{}",
         "{:.2f}C",
         "{:.2f}hPa",
@@ -76,7 +79,8 @@ def pretty_print_data(*data_to_print, log=False):
 
 
 def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
-                    soilmoisture_obj, pressure_obj, humidity_obj,
+                    soiltemperature_obj, soilmoisture_obj,
+                    pressure_obj, humidity_obj,
                     output_file=None, log=False):
     """
     Get and print one sample from the sensors.
@@ -89,6 +93,8 @@ def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
         Initialized anemometer speed instance to retrieve data from.
     winddir_obj : ivaldi.devices.analog.AnemometerDirection
         Initialized anemometer direction instance to retrieve data from.
+    soiltemperature_obj : ivaldi.devices.onewire.MaximDS18B20
+        Initialized soil temperature sensor instance to retrieve data from.
     soilmoisture_obj : ivaldi.devices.analog.SoilMoisture
         Initialized soil moisture sensor instance to retrieve data from.
     pressure_obj : ivaldi.devices.adafruit.AdafruitBMP280
@@ -113,6 +119,7 @@ def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
         windspeed_obj.output_value_average(),
         windspeed_obj.output_value_average(period_s=60 * 10),
         winddir_obj.value,
+        soiltemperature_obj.value,
         soilmoisture_obj.value,
         pressure_obj.temperature,
         pressure_obj.pressure,
@@ -164,6 +171,7 @@ def monitor_sensors(pin_rain, pin_wind, channel_wind, channel_soil,
     anemometer_speed = ivaldi.devices.counter.AnemometerSpeed(pin=pin_wind)
     anemometer_direction = ivaldi.devices.analog.AnemometerDirection(
         channel=channel_wind)
+    soil_temperature = ivaldi.devices.onewire.MaximDS18B20()
     soil_moisture = ivaldi.devices.analog.SoilMoisture(
         channel=channel_soil)
     pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
@@ -173,6 +181,7 @@ def monitor_sensors(pin_rain, pin_wind, channel_wind, channel_soil,
         "raingauge_obj": rain_gauge,
         "windspeed_obj": anemometer_speed,
         "winddir_obj": anemometer_direction,
+        "soiltemperature_obj": soil_temperature,
         "soilmoisture_obj": soil_moisture,
         "pressure_obj": pressure_sensor,
         "humidity_obj": humidity_sensor,

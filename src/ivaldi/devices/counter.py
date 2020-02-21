@@ -23,7 +23,7 @@ WIND_M_PER_COUNT = 1.00584
 WIND_AVERAGE_PERIOD_S = 3
 
 
-class CountDevice():
+class CountDevice:
     """
     A generic counter device, connected via simple hi/lo GPIO.
 

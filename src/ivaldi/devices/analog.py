@@ -14,7 +14,7 @@ SOIL_DEFAULT_OFFSET = 0
 SOIL_DEFAULT_SCALE = 1
 
 
-class AnalogMeasurementMixin():
+class AnalogMeasurementMixin:
     """
     Class for an analog measurement sensor device.
 
