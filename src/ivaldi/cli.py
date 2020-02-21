@@ -35,7 +35,7 @@ def generate_arg_parser():
     parser_monitor = subparsers.add_parser(
         "monitor", help="Monitor the sensor status and print to the terminal",
         argument_default=argparse.SUPPRESS)
-    parser_monitor.set_defaults(func=ivaldi.monitor.monitor_sensors)
+    parser_monitor.set_defaults(func=ivaldi.monitor.start_monitoring)
 
     parser_send = subparsers.add_parser(
         "send", help="Monitor the connected sensor and send the data via UART",

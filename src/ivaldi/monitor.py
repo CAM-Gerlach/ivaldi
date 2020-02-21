@@ -16,21 +16,21 @@ import ivaldi.utils
 
 PERIOD_S_DEFAULT = 1
 
-VARIABLE_NAMES = [
-    "time_elapsed_s",
-    "temperature_bmp280_C",
-    "pressure_hPa",
-    "altitude_m",
-    "temperature_sht31d_C",
-    "relative_humidity",
-    "wind_gust_m_s_3s",
-    "wind_sustained_m_s_10min",
-    "wind_direction_deg_n",
-    "rain_mm",
-    "rain_rate_mm_h",
-    "soil_temperature_C",
-    "soil_moisture_raw",
-    ]
+VARIABLES = {
+    "time_elapsed_s": "{:.1f}s",
+    "temperature_bmp280_C": "{:.2f}C",
+    "pressure_hPa": "{:.2f}hPa",
+    "altitude_m": "{:.2f}m",
+    "temperature_sht31d_C": "{:.2f}C",
+    "relative_humidity": "{:.2f}%",
+    "wind_gust_m_s_3s": "{:.2f}m/s(3s)",
+    "wind_sustained_m_s_10min": "{:.2f}m/s(10min)",
+    "wind_direction_deg_n": "{:.1f}deg",
+    "rain_mm": "{:.1f}mm",
+    "rain_rate_mm_h": "{:.2f}mm/h(5min)",
+    "soil_temperature_C": "{:.2f}C",
+    "soil_moisture_raw": "{}",
+    }
 
 
 def pretty_print_data(*data_to_print, log=False):
@@ -51,22 +51,7 @@ def pretty_print_data(*data_to_print, log=False):
         Pretty-printed output string.
 
     """
-    output_strs = [
-        "{:.1f}s",
-        "{:.2f}C",
-        "{:.2f}hPa",
-        "{:.2f}m",
-        "{:.2f}C",
-        "{:.2f}%",
-        "{:.2f}m/s(3s)",
-        "{:.2f}m/s(10min)",
-        "{:.1f}deg",
-        "{:.1f}mm",
-        "{:.2f}mm/h(5min)",
-        "{:.2f}C",
-        "{}",
-        ]
-    output_str = "|".join(output_strs)
+    output_str = "|".join(VARIABLES.values())
     output_str = output_str.format(*data_to_print)
 
     if log:
@@ -80,10 +65,9 @@ def pretty_print_data(*data_to_print, log=False):
 
 def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
                     soiltemperature_obj, soilmoisture_obj,
-                    pressure_obj, humidity_obj,
-                    output_file=None, log=False):
+                    pressure_obj, humidity_obj):
     """
-    Get and print one sample from the sensors.
+    Get observations from each sensor.
 
     Parameters
     ----------
@@ -101,11 +85,6 @@ def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
         Initialized adafruit pressure sensor to retrieve data from.
     humidity_obj : ivaldi.devices.adafruit.AdafruitSHT31D
         Initialized adafruit humidity sensor to retrieve data from.
-    output_file : io.IOBase or None
-        File object to output the data to. If None, prints to the screen.
-    log : bool, optional
-        Whether to print every observation on a seperate line or update one.
-        The default is False.
 
     Returns
     -------
@@ -127,19 +106,42 @@ def get_sensor_data(raingauge_obj, windspeed_obj, winddir_obj,
         soiltemperature_obj.value,
         soilmoisture_obj.value,
         ]
-    sensor_data_dict = {
-        key: value for key, value in zip(VARIABLE_NAMES, sensor_data)}
 
-    pretty_print_data(log=log, *sensor_data)
+    sensor_data = {
+        key: value for key, value in zip(VARIABLES.keys(), sensor_data)}
+
+    return sensor_data
+
+
+def get_monitoring_data(output_file=None, log=False, **sensor_kwargs):
+    """
+    Get and print one sample from the sensors.
+
+    Parameters
+    ----------
+    output_file : io.IOBase or None
+        File object to output the data to. If None, prints to the screen.
+    log : bool, optional
+        Whether to print every observation on a seperate line or update one.
+        The default is False.
+
+    Returns
+    -------
+    None.
+
+    """
+    sensor_data = get_sensor_data(**sensor_kwargs)
+
+    pretty_print_data(log=log, *list(sensor_data.values()))
 
     if output_file is not None:
-        ivaldi.output.write_line_csv(sensor_data_dict, out_file=output_file)
+        ivaldi.output.write_line_csv(sensor_data, out_file=output_file)
 
-    return sensor_data_dict
+    return sensor_data
 
 
-def monitor_sensors(pin_rain, pin_wind, channel_wind, channel_soil,
-                    period_s=PERIOD_S_DEFAULT, output_path=None, log=False):
+def setup_sensors(pin_rain, pin_wind, channel_wind, channel_soil,
+                  period_s=PERIOD_S_DEFAULT):
     """
     Mainloop for continously reporting key metrics from the rain gauge.
 
@@ -155,6 +157,42 @@ def monitor_sensors(pin_rain, pin_wind, channel_wind, channel_soil,
         The ADC channel (0-3) to use for the soil moisture sensor.
     period_s : float, optional
         The period at which to update, in s. The default is 1 s.
+
+    Returns
+    -------
+    None.
+
+    """
+    rain_gauge = ivaldi.devices.counter.TippingBucketRainGauge(pin=pin_rain)
+    anemometer_speed = ivaldi.devices.counter.AnemometerSpeed(pin=pin_wind)
+    anemometer_direction = ivaldi.devices.analog.AnemometerDirection(
+        channel=channel_wind)
+    soil_temperature = ivaldi.devices.onewire.MaximDS18B20()
+    soil_moisture = ivaldi.devices.analog.SoilMoisture(
+        channel=channel_soil)
+    pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
+    humidity_sensor = ivaldi.devices.adafruit.AdafruitSHT31D()
+
+    sensor_args = {
+        "raingauge_obj": rain_gauge,
+        "windspeed_obj": anemometer_speed,
+        "winddir_obj": anemometer_direction,
+        "soiltemperature_obj": soil_temperature,
+        "soilmoisture_obj": soil_moisture,
+        "pressure_obj": pressure_sensor,
+        "humidity_obj": humidity_sensor,
+        "period_s": period_s,
+        }
+
+    return sensor_args
+
+
+def start_monitoring(output_path=None, log=False, **sensor_kwargs):
+    """
+    Mainloop for continously reporting key metrics from the rain gauge.
+
+    Parameters
+    ----------
     output_path : str or pathlib.Path
         Path to output the data to. If None, prints to the screen.
     log : bool, optional
@@ -167,30 +205,11 @@ def monitor_sensors(pin_rain, pin_wind, channel_wind, channel_soil,
 
     """
     # Mainloop to measure tipping bucket
-    rain_gauge = ivaldi.devices.counter.TippingBucketRainGauge(pin=pin_rain)
-    anemometer_speed = ivaldi.devices.counter.AnemometerSpeed(pin=pin_wind)
-    anemometer_direction = ivaldi.devices.analog.AnemometerDirection(
-        channel=channel_wind)
-    soil_temperature = ivaldi.devices.onewire.MaximDS18B20()
-    soil_moisture = ivaldi.devices.analog.SoilMoisture(
-        channel=channel_soil)
-    pressure_sensor = ivaldi.devices.adafruit.AdafruitBMP280()
-    humidity_sensor = ivaldi.devices.adafruit.AdafruitSHT31D()
-
-    sensor_params = {
-        "raingauge_obj": rain_gauge,
-        "windspeed_obj": anemometer_speed,
-        "winddir_obj": anemometer_direction,
-        "soiltemperature_obj": soil_temperature,
-        "soilmoisture_obj": soil_moisture,
-        "pressure_obj": pressure_sensor,
-        "humidity_obj": humidity_sensor,
-        "period_s": period_s,
-        "log": log,
-        }
+    sensor_args = setup_sensors(**sensor_kwargs)
+    sensor_args["log"] = log
     if output_path is not None:
         with open(output_path, "a", encoding="utf-8", newline="") as out_file:
-            ivaldi.utils.run_periodic(get_sensor_data)(
-                **sensor_params, output_file=out_file)
+            ivaldi.utils.run_periodic(get_monitoring_data)(
+                **sensor_args, output_file=out_file)
     else:
-        ivaldi.utils.run_periodic(get_sensor_data)(**sensor_params)
+        ivaldi.utils.run_periodic(get_monitoring_data)(**sensor_args)
